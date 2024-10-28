@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente de Tareas</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Asistente de Tareas</h1>
+    </header>
+
+    <main>
+        <!-- Formulario simplificado para agregar una nueva tarea -->
+        <section class="task-form">
+            <h2>Agregar Tarea</h2>
+            <form id="taskForm">
+                <input type="text" id="taskDescription" placeholder="Escribe la descripción de la tarea" required>
+                <button type="submit">Agregar</button>
+            </form>
+        </section>
+
+        <!-- Lista de tareas -->
+        <section class="task-list">
+            <h2>Tareas</h2>
+            <ul id="tasks"></ul>
+        </section>
+
+        <!-- Comando en lenguaje natural -->
+        <section class="command-section">
+            <h2>Comando</h2>
+            <input type="text" id="commandInput" placeholder="Escribe un comando...">
+            <button onclick="sendCommand()">Enviar</button>
+        </section>
+    </main>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
