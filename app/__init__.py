@@ -1,23 +1,25 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate  # Importa Flask-Migrate
-from apscheduler.schedulers.background import BackgroundScheduler
 
 db = SQLAlchemy()
-migrate = Migrate()  # Inicializa el objeto Migrate
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config.Config')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
-    migrate.init_app(app, db)  # Inicializa Flask-Migrate con la app y db
 
-    # Crear tablas solo si no existen
     with app.app_context():
-        db.create_all()  # Crea las tablas antes de entrenar el modelo
-    
+        from . import models
+        db.create_all()
+
+        # Entrenar el modelo dentro del contexto de la aplicación
+        from .decision_tree import train_model
+        train_model()
+
+    # Registrar el blueprint de rutas
     from .routes import main
     app.register_blueprint(main)
-    
+
     return app

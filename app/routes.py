@@ -20,10 +20,12 @@ def add_task():
     title = data.get('title')
     urgency = data.get('urgency')
     importance = data.get('importance')
-    external_priority = data.get('external_priority')
+    external_priority = data.get('external_priority', 0)  # Default to 0 if not provided
     
+    # Clasificar la prioridad de la tarea
     priority = classify_task([urgency, importance, external_priority])
 
+    # Crear una nueva tarea con la prioridad clasificada
     new_task = Task(
         title=title,
         urgency=urgency,
@@ -55,11 +57,13 @@ def update_task(task_id):
     data = request.get_json()
     task = Task.query.get_or_404(task_id)
 
+    # Actualizar los datos de la tarea
     task.title = data.get('title', task.title)
     task.urgency = data.get('urgency', task.urgency)
     task.importance = data.get('importance', task.importance)
     task.external_priority = data.get('external_priority', task.external_priority)
 
+    # Reclasificar la prioridad con los nuevos valores
     task.priority = classify_task([task.urgency, task.importance, task.external_priority])
     db.session.commit()
 
@@ -79,6 +83,7 @@ def give_feedback(task_id):
     adjusted_priority = data.get('priority')
 
     if adjusted_priority is not None:
+        # Guardar retroalimentación en FeedbackLog
         feedback = FeedbackLog(
             task_id=task.id,
             original_priority=task.priority,
@@ -86,9 +91,11 @@ def give_feedback(task_id):
         )
         db.session.add(feedback)
         
+        # Actualizar la prioridad de la tarea con la retroalimentación ajustada
         task.priority = adjusted_priority
         db.session.commit()
 
+        # Guardar preferencia de usuario basada en retroalimentación
         preference = UserPreferences(
             urgency=task.urgency,
             importance=task.importance,
@@ -98,6 +105,7 @@ def give_feedback(task_id):
         db.session.add(preference)
         db.session.commit()
 
+        # Reentrenamiento automático si se ha alcanzado el umbral de retroalimentación
         feedback_count = FeedbackLog.query.count()
         if feedback_count >= FEEDBACK_THRESHOLD:
             train_model()
@@ -134,8 +142,10 @@ def add_task_with_data(task_data):
     external_priority = task_data.get('external_priority', 0)
     deadline = task_data.get('deadline')
 
+    # Clasificar la tarea utilizando el árbol de decisión
     priority = classify_task([urgency, importance, external_priority])
 
+    # Crear la tarea con los datos proporcionados
     new_task = Task(
         title=title,
         urgency=urgency,

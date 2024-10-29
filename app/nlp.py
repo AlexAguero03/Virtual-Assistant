@@ -44,43 +44,40 @@ def interpret_command(command_text):
     print("Entidades detectadas:", entidades)
     print("Palabras clave detectadas:", palabras_clave)
 
-    # Inicialización de la acción y estructura de datos para la tarea
+    # Determinar la acción basada en palabras clave o entidades
     action = None
     task_data = {}
 
-    # Ajustar lógica para acciones en función de palabras clave específicas
-    if any(kw in palabras_clave for kw in ["agregar", "crear", "reunión", "enviar", "informe"]):
+    # Verificar si las palabras clave contienen alguna acción específica
+    add_task_keywords = {"agregar", "crear", "añadir", "programar", "reunión"}
+    list_task_keywords = {"listar", "mostrar", "consultar", "ver"}
+
+    # Determinar acción en base a palabras clave
+    if any(word in command_text for word in add_task_keywords):
         action = "add_task"
-        print("Acción detectada: add_task")
-    elif any(kw in palabras_clave for kw in ["listar", "mostrar", "tareas pendientes", "consultar", "ver"]):
+    elif any(word in command_text for word in list_task_keywords):
         action = "list_tasks"
-        print("Acción detectada: list_tasks")
-    
-    # Extraer información adicional (fecha, hora) con regex y entidades de Watson
-    time_phrases = re.findall(r'\b(hoy|mañana|próximo lunes|próximo miércoles|\d{1,2} (am|pm)|\d{1,2}:\d{2} (am|pm))\b', command_text, re.IGNORECASE)
-    time_text = ' '.join([phrase[0] for phrase in time_phrases])
-    print("Texto extraído manualmente para fecha y hora:", time_text)
 
-    # Ajustar fechas relativas como "próximo miércoles"
-    if "próximo miércoles" in time_text:
-        today = datetime.today()
-        days_until_wednesday = (2 - today.weekday() + 7) % 7
-        next_wednesday = today + timedelta(days=days_until_wednesday)
-        time_text = next_wednesday.strftime("%Y-%m-%d") + " " + time_text.replace("próximo miércoles", "").strip()
-        print("Texto ajustado para fecha relativa:", time_text)
+    # Análisis de fechas en entidades o palabras clave
+    detected_date = None
+    if "mañana" in entidades:
+        detected_date = datetime.today() + timedelta(days=1)
+    elif "hoy" in entidades:
+        detected_date = datetime.today()
 
-    # Analizar con dateparser
-    if time_text:
-        date_time = dateparser.parse(time_text, settings={'PREFER_DATES_FROM': 'future'}, languages=['es'])
-        if date_time:
-            task_data["deadline"] = date_time
-            print("Fecha límite detectada:", task_data["deadline"])
-        else:
-            print("No se pudo analizar la fecha y hora.")
-    else:
-        print("No se detectó ninguna frase de tiempo.")
-    
-    # Asignar título de la tarea si es una acción de "add_task"
+    # Si encontramos una hora exacta en el comando
+    time_match = re.search(r'\b(\d{1,2}) (am|pm)\b', command_text, re.IGNORECASE)
+    if time_match and detected_date:
+        hour = int(time_match.group(1))
+        if "pm" in time_match.group(2).lower() and hour != 12:
+            hour += 12
+        detected_date = detected_date.replace(hour=hour, minute=0, second=0)
+
+    if detected_date:
+        task_data["deadline"] = detected_date
+        print("Fecha límite detectada:", task_data["deadline"])
+
+    # Asignar título de la tarea
     if action == "add_task":
         task_data["title"] = command_text
         print("Título de la tarea detectado:", task_data["title"])

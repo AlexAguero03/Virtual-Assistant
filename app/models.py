@@ -10,9 +10,8 @@ class Task(db.Model):
     importance = db.Column(db.Integer, nullable=True)
     external_priority = db.Column(db.Integer, nullable=True)
     priority = db.Column(db.Integer, nullable=True)
-    deadline = db.Column(db.DateTime, nullable=True)  # Nuevo campo para la fecha límite
+    deadline = db.Column(db.DateTime, nullable=True)  # Campo para la fecha límite
 
-# Nueva tabla para almacenar retroalimentación
 class FeedbackLog(db.Model):
     __tablename__ = 'feedback_log'
     
