@@ -17,6 +17,15 @@
             <h2>Agregar Tarea</h2>
             <form id="taskForm">
                 <input type="text" id="taskDescription" placeholder="Escribe la descripción de la tarea" required>
+                
+                <!-- Selector de fecha -->
+                <label for="taskDate">Fecha límite:</label>
+                <input type="date" id="taskDate" required>
+
+                <!-- Selector de hora -->
+                <label for="taskTime">Hora límite:</label>
+                <input type="time" id="taskTime" required>
+                
                 <button type="submit">Agregar</button>
             </form>
         </section>
@@ -27,12 +36,6 @@
             <ul id="tasks"></ul>
         </section>
 
-        <!-- Comando en lenguaje natural -->
-        <section class="command-section">
-            <h2>Comando</h2>
-            <input type="text" id="commandInput" placeholder="Escribe un comando...">
-            <button onclick="sendCommand()">Enviar</button>
-        </section>
     </main>
 
     <script src="/static/js/script.js"></script>

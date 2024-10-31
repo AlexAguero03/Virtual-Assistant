@@ -4,6 +4,9 @@ from .models import Task, FeedbackLog, UserPreferences  # Modelos de la base de 
 from .decision_tree import classify_task, train_model  # Clasificador de prioridad
 from .nlp import interpret_command  # Interprete NLP para comandos
 from . import db  # Base de datos
+from flask import request, jsonify
+from .models import Task  # Asegúrate de que este import está configurado
+from datetime import datetime
 
 main = Blueprint('main', __name__)
 
@@ -38,6 +41,7 @@ def add_task():
 
     return jsonify({"message": "Tarea añadida correctamente", "task_id": new_task.id, "priority": priority})
 
+"""
 @main.route('/tasks', methods=['GET'])
 def get_tasks():
     tasks = Task.query.all()
@@ -50,6 +54,28 @@ def get_tasks():
         "priority": task.priority,
         "deadline": task.deadline
     } for task in tasks]
+    return jsonify(tasks_list) 
+"""
+
+@main.route('/tasks', methods=['GET'])
+def get_tasks():
+    tasks = Task.query.all()
+    tasks_list = []
+    for task in tasks:
+        # Imprimir la fecha límite en el backend para depuración
+        print("Fecha en el backend:", task.deadline)
+        
+        tasks_list.append({
+            "id": task.id,
+            "title": task.title,
+            "urgency": task.urgency,
+            "importance": task.importance,
+            "external_priority": task.external_priority,
+            "priority": task.priority,
+            # Convertir la fecha a ISO format para enviar al frontend
+            "deadline": task.deadline.isoformat() if task.deadline else None
+        })
+        
     return jsonify(tasks_list)
 
 @main.route('/tasks/<int:task_id>', methods=['PUT'])
@@ -115,15 +141,25 @@ def give_feedback(task_id):
     else:
         return jsonify({"message": "No se proporcionó prioridad ajustada"}), 400
 
+
 @main.route('/command', methods=['POST'])
 def process_command():
-    command_text = request.json.get("command")
+    data = request.json
+    command_text = data.get("command")
+    date_str = data.get("date")      # Recibir fecha
+    time_str = data.get("time")      # Recibir hora
+
     interpreted = interpret_command(command_text)
     
     action = interpreted["action"]
     task_data = interpreted["task_data"]
 
-    # Ejecutar la acción interpretada
+    # Si se proporcionan fecha y hora, combina ambas en un datetime
+    if date_str and time_str:
+        # Convierte `date_str` y `time_str` a un objeto datetime
+        task_data["deadline"] = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+    
+    # Ejecuta la acción según lo interpretado
     if action == "add_task":
         return add_task_with_data(task_data)
     elif action == "list_tasks":
@@ -141,6 +177,8 @@ def add_task_with_data(task_data):
     importance = task_data.get('importance', 1)
     external_priority = task_data.get('external_priority', 0)
     deadline = task_data.get('deadline')
+    print("Fecha límite detectada en 'add_task_with_data':", deadline)
+
 
     # Clasificar la tarea utilizando el árbol de decisión
     priority = classify_task([urgency, importance, external_priority])
