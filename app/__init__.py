@@ -1,3 +1,6 @@
+# En __init__.py
+
+import threading
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
@@ -21,5 +24,16 @@ def create_app():
     # Registrar el blueprint de rutas
     from .routes import main
     app.register_blueprint(main)
+
+    # Configuración del temporizador de reentrenamiento
+    TRAIN_INTERVAL_SECONDS = 60  # Cambia el intervalo de reentrenamiento aquí
+
+    def timer_function():
+        with app.app_context():  # Usa el contexto de aplicación para train_model
+            print("Reentrenando el modelo de decisión...")
+            train_model()
+        threading.Timer(TRAIN_INTERVAL_SECONDS, timer_function).start()
+
+    timer_function()  # Llama al temporizador inicial
 
     return app

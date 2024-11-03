@@ -170,6 +170,23 @@ def process_command():
         return delete_task(task_data["id"])
     else:
         return jsonify({"message": "Comando no reconocido"}), 400
+    
+@main.route('/test_classification', methods=['POST'])
+def test_classification():
+    data = request.get_json()
+    urgency = data.get('urgency', 1)
+    importance = data.get('importance', 1)
+    external_priority = data.get('external_priority', 0)
+    # Agrupa las características en un arreglo
+    features = [urgency, importance, external_priority]
+    
+    # Clasifica la tarea usando el modelo
+    priority = classify_task(features)
+    
+    return jsonify({
+        "message": "Clasificación completada",
+        "priority": priority
+    })
 
 def add_task_with_data(task_data):
     title = task_data.get('title')

@@ -1,21 +1,21 @@
-import pickle
+import joblib
 import os
-from sklearn.tree import DecisionTreeClassifier
-from .models import Task, FeedbackLog
 import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.validation import check_is_fitted
+from .models import Task, FeedbackLog
 
 # Inicializamos el modelo
-model = DecisionTreeClassifier(max_depth=5, random_state=42)
-model_path = 'modelo_arbol_decision.pkl'
+model_path = 'modelo_clasificacion_tareas.pkl'
+csv_path = 'conjunto_datos_tareas_dinamico.csv'
 
 # Cargar el modelo desde el archivo si existe
 if os.path.exists(model_path):
-    with open(model_path, 'rb') as file:
-        model = pickle.load(file)
+    model = joblib.load(model_path)
     print("Modelo cargado desde archivo.")
 else:
-    print("No se encontró un modelo previo, se entrenará uno nuevo.")
+    print("No se encontró un modelo previo, y no hay archivo CSV para entrenar.")
 
 def train_model():
     global model
@@ -28,7 +28,7 @@ def train_model():
     # Recopilamos los datos de feedback
     for feedback in feedback_logs:
         task = Task.query.get(feedback.task_id)
-        if task and feedback.adjusted_priority is not None:  # Verifica que adjusted_priority no sea None
+        if task and feedback.adjusted_priority is not None:
             X.append([task.urgency, task.importance, task.external_priority])
             y.append(feedback.adjusted_priority)
 
@@ -42,15 +42,14 @@ def train_model():
     y = np.array(y)
 
     # Asegurarse de que y tenga valores discretos
-    y = np.round(y).astype(int)  # Redondear y convertir a entero
+    y = np.round(y).astype(int)
 
     if len(X) > 0:
         print("Valores de y después de redondear:", y)
         model.fit(X, y)
         print("Modelo reentrenado con éxito.")
         # Guardar el modelo entrenado en un archivo
-        with open(model_path, 'wb') as file:
-            pickle.dump(model, file)
+        joblib.dump(model, model_path)
     else:
         print("No hay suficientes datos para reentrenar el modelo.")
 
@@ -62,4 +61,5 @@ def classify_task(features):
         return 0
 
     prediction = model.predict([features])
+    print("Predicción de urgencia e importancia:", prediction)
     return int(prediction[0])
