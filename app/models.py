@@ -1,4 +1,4 @@
-from . import db
+from .extensions import db  # Importar db desde extensions
 from datetime import datetime
 
 class Task(db.Model):
@@ -21,7 +21,6 @@ class FeedbackLog(db.Model):
     adjusted_priority = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relación con la tabla Task
     task = db.relationship('Task', backref='feedback')
 
 class UserPreferences(db.Model):
@@ -31,5 +30,5 @@ class UserPreferences(db.Model):
     urgency = db.Column(db.Integer, nullable=False)
     importance = db.Column(db.Integer, nullable=False)
     external_priority = db.Column(db.Integer, nullable=False)
-    adjusted_priority = db.Column(db.Integer, nullable=False)  # La prioridad que el usuario prefiere
+    adjusted_priority = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())

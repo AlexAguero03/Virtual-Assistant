@@ -1,15 +1,11 @@
-# En __init__.py
-
 import threading
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from .extensions import db  # Importar db desde extensions
+from .routes.main import main as main_blueprint
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config.from_object('config.Config')
 
     db.init_app(app)
 
@@ -17,23 +13,20 @@ def create_app():
         from . import models
         db.create_all()
 
-        # Entrenar el modelo dentro del contexto de la aplicación
-        from .decision_tree import train_model
-        train_model()
+        # Pasa `db` a `train_model`
+        from .ml.model import train_model
+        train_model(db)
 
-    # Registrar el blueprint de rutas
-    from .routes import main
-    app.register_blueprint(main)
+    app.register_blueprint(main_blueprint)
 
-    # Configuración del temporizador de reentrenamiento
-    TRAIN_INTERVAL_SECONDS = 60  # Cambia el intervalo de reentrenamiento aquí
+    TRAIN_INTERVAL_SECONDS = 60
 
     def timer_function():
-        with app.app_context():  # Usa el contexto de aplicación para train_model
+        with app.app_context():
             print("Reentrenando el modelo de decisión...")
-            train_model()
+            train_model(db)
         threading.Timer(TRAIN_INTERVAL_SECONDS, timer_function).start()
 
-    timer_function()  # Llama al temporizador inicial
+    timer_function()
 
     return app
